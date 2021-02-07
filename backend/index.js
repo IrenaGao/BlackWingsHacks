@@ -8,6 +8,14 @@ const app = express(),
 
 username = "";
 password = "";
+anxiety = 0;
+depression = 0;
+eating = 0;
+psychosis = 0;
+personality = 0;
+
+users = [];
+users2 = [];
 
 app.use(bodyParser.json());
 
@@ -15,14 +23,24 @@ app.listen(3080,function(){
     console.log("server is running on port 3080");
  });
 
+app.get('/getresult', (req, res) => {
+    console.log(users);
+    users.push({user: "WishMoon", anxiety: 5, depression: 3, eating: 4, psychosis: 2, personality: 1});
+    res.json(users);
+});
+
 app.post('/result', (req, res) => {
     const user = req.body.user;
-    console.log("adding user");
+    // users.push(user);
     username = user.name;
     password = user.password;
+    anxiety = parseFloat(user.anxiety);
+    depression = parseFloat(user.depression);
+    eating = parseFloat(user.eating);
+    psychosis = parseFloat(user.psychosis);
+    personality = parseFloat(user.personality);
     res.json("user added");
-    console.log(username);
-    console.log(password);
+    console.log(user);
 
     // Connect to the "bank" database.
     var config = {
@@ -36,9 +54,6 @@ app.post('/result', (req, res) => {
     var pool = new pg.Pool(config);
 
     pool.connect(function (err, client, done) {
-        console.log("pool");
-        console.log(username);
-        console.log(password);
 
     // Close communication with the database and exit.
         var finish = function () {
@@ -53,24 +68,24 @@ app.post('/result', (req, res) => {
         async.waterfall([
             function (next) {
                 // Create the 'accounts' table.
-                client.query('CREATE TABLE IF NOT EXISTS people (username TEXT, password TEXT);', next);
+                client.query('CREATE TABLE IF NOT EXISTS individuals (username TEXT, password TEXT, anxiety FLOAT, depression FLOAT, eating FLOAT, psychosis FLOAT, personality FLOAT);', next);
             },
             function (results, next) {
                 // Insert two rows into the 'accounts' table.
-                client.query("INSERT INTO people (username, password) VALUES ('"+username+"', '"+password+"');", next);
+                client.query("INSERT INTO individuals (username, password, anxiety, depression, eating, psychosis, personality) VALUES ('"+username+"', '"+password+"', '"+anxiety+"', '"+depression+"', '"+eating+"', '"+psychosis+"', '"+personality+"');", next);
             },
             function (results, next) {
                 // Print out account balances.
-                client.query('SELECT username, password FROM people;', next);
+                client.query('SELECT username, password, anxiety, depression, eating, psychosis, personality FROM individuals;', next);
             },
         ],
         function (err, results) {
             if (err) {
-                console.error('Error inserting into and selecting from people: ', err);
+                console.error('Error inserting into and selecting from individuals: ', err);
                 finish();
             }
 
-            console.log('Initial balances:');
+            console.log('All Individuals:');
             results.rows.forEach(function (row) {
                 console.log(row);
             });
